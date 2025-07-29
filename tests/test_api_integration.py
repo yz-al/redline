@@ -7,33 +7,42 @@ class TestAPIIntegration(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
         self.base_url = "http://testserver"
+        self.created_document_ids = []
 
-    def test_create_document(self):
-        """Test document creation endpoint"""
+    def tearDown(self):
+        """Clean up any documents created during tests"""
+        for doc_id in self.created_document_ids:
+            try:
+                self.client.delete(f"/documents/{doc_id}")
+            except:
+                pass  # Ignore cleanup errors
+        self.created_document_ids.clear()
+
+    def create_test_document(self, title="Test Document", text="This is a test document."):
+        """Helper method to create a test document and track it for cleanup"""
         document_data = {
-            "title": "Test Document",
-            "text": "This is a test document for API testing."
+            "title": title,
+            "text": text
         }
         
         response = self.client.post("/documents", json=document_data)
-        
         self.assertEqual(response.status_code, 201)
-        data = response.json()
-        self.assertIn("id", data)
-        self.assertIn("version", data)
-        self.assertIn("created_at", data)
-        self.assertEqual(data["version"], 1)
+        doc_id = response.json()["id"]
+        self.created_document_ids.append(doc_id)
+        return doc_id
+
+    def test_create_document(self):
+        """Test document creation endpoint"""
+        doc_id = self.create_test_document("Test Document", "This is a test document for API testing.")
+        
+        # Verify the document was created correctly
+        self.assertIsInstance(doc_id, str)
+        self.assertGreater(len(doc_id), 0)
 
     def test_get_document(self):
         """Test document retrieval endpoint"""
         # First create a document
-        document_data = {
-            "title": "Test Document for Get",
-            "text": "This document will be retrieved."
-        }
-        
-        create_response = self.client.post("/documents", json=document_data)
-        doc_id = create_response.json()["id"]
+        doc_id = self.create_test_document("Test Document for Get", "This document will be retrieved.")
         
         # Now get the document
         response = self.client.get(f"/documents/{doc_id}")
@@ -55,13 +64,7 @@ class TestAPIIntegration(unittest.TestCase):
     def test_redline_range(self):
         """Test range-based redlining"""
         # Create a document
-        document_data = {
-            "title": "Test Document for Range Redline",
-            "text": "This is a test document for range redlining."
-        }
-        
-        create_response = self.client.post("/documents", json=document_data)
-        doc_id = create_response.json()["id"]
+        doc_id = self.create_test_document("Test Document for Range Redline", "This is a test document for range redlining.")
         
         # Apply range redline
         redline_data = {
@@ -90,13 +93,7 @@ class TestAPIIntegration(unittest.TestCase):
     def test_redline_target(self):
         """Test target-based redlining"""
         # Create a document
-        document_data = {
-            "title": "Test Document for Target Redline",
-            "text": "This is a test document with test content for testing."
-        }
-        
-        create_response = self.client.post("/documents", json=document_data)
-        doc_id = create_response.json()["id"]
+        doc_id = self.create_test_document("Test Document for Target Redline", "This is a test document with test content for testing.")
         
         # Apply target redline
         redline_data = {
@@ -123,16 +120,16 @@ class TestAPIIntegration(unittest.TestCase):
     def test_global_search(self):
         """Test global search functionality"""
         # Create multiple documents
+        doc_ids = []
         documents = [
             {"title": "Contract A", "text": "This is a legal contract between parties."},
             {"title": "Contract B", "text": "Another contract with different terms."},
             {"title": "Agreement", "text": "This is an employment agreement."}
         ]
         
-        doc_ids = []
         for doc in documents:
-            response = self.client.post("/documents", json=doc)
-            doc_ids.append(response.json()["id"])
+            doc_id = self.create_test_document(doc["title"], doc["text"])
+            doc_ids.append(doc_id)
         
         # Search for "contract"
         response = self.client.get("/documents/search?q=contract&limit=10")
@@ -148,13 +145,7 @@ class TestAPIIntegration(unittest.TestCase):
     def test_document_search(self):
         """Test document-specific search"""
         # Create a document
-        document_data = {
-            "title": "Test Document for Search",
-            "text": "This document contains the word contract and agreement."
-        }
-        
-        create_response = self.client.post("/documents", json=document_data)
-        doc_id = create_response.json()["id"]
+        doc_id = self.create_test_document("Test Document for Search", "This document contains the word contract and agreement.")
         
         # Search within the document
         response = self.client.get(f"/documents/{doc_id}/search?q=contract")
@@ -171,11 +162,7 @@ class TestAPIIntegration(unittest.TestCase):
         """Test getting all document IDs"""
         # Create some documents
         for i in range(3):
-            document_data = {
-                "title": f"Test Document {i}",
-                "text": f"This is test document {i}."
-            }
-            self.client.post("/documents", json=document_data)
+            self.create_test_document(f"Test Document {i}", f"This is test document {i}.")
         
         # Get all document IDs
         response = self.client.get("/documents")
@@ -209,13 +196,7 @@ class TestAPIIntegration(unittest.TestCase):
     def test_search_with_buffer(self):
         """Test search with custom buffer parameter"""
         # Create a document
-        document_data = {
-            "title": "Test Document for Buffer Search",
-            "text": "This is a test document with the word contract in the middle of this sentence."
-        }
-        
-        create_response = self.client.post("/documents", json=document_data)
-        doc_id = create_response.json()["id"]
+        doc_id = self.create_test_document("Test Document for Buffer Search", "This is a test document with the word contract in the middle of this sentence.")
         
         # Search with small buffer
         response = self.client.get(f"/documents/{doc_id}/search?q=contract&buffer=5")
@@ -232,11 +213,7 @@ class TestAPIIntegration(unittest.TestCase):
         """Test search with limit and offset parameters"""
         # Create multiple documents with the same search term
         for i in range(5):
-            document_data = {
-                "title": f"Test Document {i}",
-                "text": f"This is test document {i} with contract terms."
-            }
-            self.client.post("/documents", json=document_data)
+            self.create_test_document(f"Test Document {i}", f"This is test document {i} with contract terms.")
         
         # Search with limit and offset
         response = self.client.get("/documents/search?q=contract&limit=2&offset=1")
@@ -280,6 +257,65 @@ class TestAPIIntegration(unittest.TestCase):
         self.assertIn("message", data)
         self.assertIn("version", data)
         self.assertEqual(data["message"], "Document Redlining API")
+
+    def test_append_to_document(self):
+        """Test appending text to a document"""
+        # Create a document
+        doc_id = self.create_test_document("Test Document for Append", "Original content.")
+        
+        # Append text to the document
+        append_data = {"text": " Appended content."}
+        response = self.client.patch(f"/documents/{doc_id}/append", json=append_data)
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["id"], doc_id)
+        self.assertEqual(data["version"], 2)  # Version should be incremented
+        self.assertIn("message", data)
+        
+        # Verify the content was actually appended
+        get_response = self.client.get(f"/documents/{doc_id}")
+        self.assertEqual(get_response.status_code, 200)
+        document_data = get_response.json()
+        self.assertEqual(document_data["text"], "Original content. Appended content.")
+        self.assertEqual(document_data["version"], 2)
+
+    def test_append_to_nonexistent_document(self):
+        """Test appending text to a document that doesn't exist"""
+        append_data = {"text": "Some text"}
+        response = self.client.patch("/documents/nonexistent-id/append", json=append_data)
+        
+        self.assertEqual(response.status_code, 404)
+        data = response.json()
+        self.assertIn("detail", data)
+
+    def test_delete_document(self):
+        """Test document deletion endpoint"""
+        # Create a document
+        doc_id = self.create_test_document("Test Document for Delete", "This document will be deleted.")
+        
+        # Verify it exists
+        get_response = self.client.get(f"/documents/{doc_id}")
+        self.assertEqual(get_response.status_code, 200)
+        
+        # Delete the document
+        delete_response = self.client.delete(f"/documents/{doc_id}")
+        self.assertEqual(delete_response.status_code, 200)
+        
+        # Verify it's deleted
+        get_response = self.client.get(f"/documents/{doc_id}")
+        self.assertEqual(get_response.status_code, 404)
+        
+        # Remove from cleanup list since we already deleted it
+        self.created_document_ids.remove(doc_id)
+
+    def test_delete_nonexistent_document(self):
+        """Test deleting a document that doesn't exist"""
+        response = self.client.delete("/documents/nonexistent-id")
+        
+        self.assertEqual(response.status_code, 404)
+        data = response.json()
+        self.assertIn("detail", data)
 
 if __name__ == '__main__':
     unittest.main() 

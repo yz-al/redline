@@ -2,7 +2,7 @@ from typing import Dict, Optional, List, Set
 from core.models import Document
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 import threading
 from contextlib import contextmanager
@@ -35,7 +35,7 @@ class DocumentLock:
             # Create lock metadata
             lock_data = {
                 'lock_id': self.lock_id,
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'timeout': self.lock_timeout
             }
             
@@ -57,7 +57,7 @@ class DocumentLock:
                 existing_data = json.loads(existing_blob.download_as_text())
                 
                 lock_time = datetime.fromisoformat(existing_data['timestamp'])
-                if datetime.utcnow() - lock_time > timedelta(seconds=existing_data['timeout']):
+                if datetime.now(timezone.utc) - lock_time > timedelta(seconds=existing_data['timeout']):
                     # Lock is expired, try to steal it
                     return self._steal_lock()
                 else:
@@ -76,7 +76,7 @@ class DocumentLock:
         try:
             lock_data = {
                 'lock_id': self.lock_id,
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'timeout': self.lock_timeout
             }
             
@@ -195,7 +195,7 @@ class GCSDocumentStore:
         """
         # Serialize document
         doc_data = document.to_dict()
-        doc_data['updated_at'] = datetime.utcnow().isoformat()
+        doc_data['updated_at'] = datetime.now(timezone.utc).isoformat()
         
         # Save to GCS
         blob = self.bucket.blob(f"documents/{document.id}.json")
@@ -305,6 +305,31 @@ class GCSDocumentStore:
             print(f"Error checking existence of document {doc_id}: {e}")
             return False
     
+    def append(self, doc_id: str, text_to_append: str) -> bool:
+        """
+        Append text to a document with locking
+        
+        Args:
+            doc_id: Document ID to append to
+            text_to_append: Text to append
+            
+        Returns:
+            True if document was updated, False if not found
+        """
+        with self.lock_manager.lock_document(doc_id):
+            document = self.get_without_lock(doc_id)
+            if not document:
+                return False
+            
+            # Append the text
+            document.text += text_to_append
+            document.version += 1
+            document.updated_at = datetime.now(timezone.utc)
+            
+            # Save the updated document
+            self.save_without_lock(document)
+            return True
+    
     def count(self) -> int:
         """
         Get the total number of documents
@@ -332,7 +357,7 @@ class GCSDocumentStore:
             for document in documents:
                 # Serialize document
                 doc_data = document.to_dict()
-                doc_data['updated_at'] = datetime.utcnow().isoformat()
+                doc_data['updated_at'] = datetime.now(timezone.utc).isoformat()
                 
                 # Save to GCS
                 blob = self.bucket.blob(f"documents/{document.id}.json")
@@ -357,7 +382,7 @@ class GCSDocumentStore:
                     lock_data = json.loads(blob.download_as_text())
                     lock_time = datetime.fromisoformat(lock_data['timestamp'])
                     
-                    if datetime.utcnow() - lock_time > timedelta(seconds=lock_data['timeout']):
+                    if datetime.now(timezone.utc) - lock_time > timedelta(seconds=lock_data['timeout']):
                         blob.delete()
                         cleaned_count += 1
                         

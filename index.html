@@ -270,8 +270,8 @@
         <div class="tabs">
             <button class="tab active" onclick="showTab('upload')">Upload</button>
             <button class="tab" onclick="showTab('get-document')">Get Document</button>
-            <button class="tab" onclick="showTab('redline-range')">Redline Range</button>
-            <button class="tab" onclick="showTab('redline-target')">Redline Target</button>
+            <button class="tab" onclick="showTab('append')">Append</button>
+            <button class="tab" onclick="showTab('redline')">Redline</button>
             <button class="tab" onclick="showTab('search')">Search</button>
         </div>
 
@@ -303,54 +303,75 @@
             <div id="get-document-result" class="result" style="display: none;"></div>
         </div>
 
-        <!-- Redline Range Tab -->
-        <div id="redline-range" class="tab-content">
-            <h2>Redline by Range</h2>
+        <!-- Append Tab -->
+        <div id="append" class="tab-content">
+            <h2>Append to Document</h2>
             <div class="form-group">
-                <label for="range-document">Select Document:</label>
-                <select id="range-document">
+                <label for="append-document">Select Document:</label>
+                <select id="append-document">
                     <option value="">Loading documents...</option>
                 </select>
             </div>
             <div class="form-group">
-                <label for="range-start">Start Position:</label>
-                <input type="number" id="range-start" placeholder="0">
+                <label for="append-text">Text to Append:</label>
+                <textarea id="append-text" rows="5" placeholder="Enter text to append to the document"></textarea>
             </div>
-            <div class="form-group">
-                <label for="range-end">End Position:</label>
-                <input type="number" id="range-end" placeholder="10">
-            </div>
-            <div class="form-group">
-                <label for="range-replacement">Replacement Text:</label>
-                <input type="text" id="range-replacement" placeholder="Enter replacement text">
-            </div>
-            <button onclick="redlineRange()">Apply Redline</button>
-            <div id="range-result" class="result" style="display: none;"></div>
+            <button onclick="appendToDocument()">Append Text</button>
+            <div id="append-result" class="result" style="display: none;"></div>
         </div>
 
-        <!-- Redline Target Tab -->
-        <div id="redline-target" class="tab-content">
-            <h2>Redline by Target</h2>
+        <!-- Redline Tab -->
+        <div id="redline" class="tab-content">
+            <h2>Redline Document</h2>
+
+            <!-- Toggle for redline mode -->
+            <div class="toggle-container">
+                <span>Range-based</span>
+                <label class="toggle">
+                    <input type="checkbox" id="redline-toggle" onchange="toggleRedlineMode()">
+                    <span class="slider"></span>
+                </label>
+                <span>Target-based</span>
+            </div>
+
             <div class="form-group">
-                <label for="target-document">Select Document:</label>
-                <select id="target-document">
+                <label for="redline-document">Select Document:</label>
+                <select id="redline-document">
                     <option value="">Loading documents...</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="target-text">Target Text:</label>
-                <input type="text" id="target-text" placeholder="Text to find and replace">
+
+            <!-- Range-based redline form -->
+            <div id="range-redline-form">
+                <div class="form-group">
+                    <label for="redline-start">Start Position:</label>
+                    <input type="number" id="redline-start" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label for="redline-end">End Position:</label>
+                    <input type="number" id="redline-end" placeholder="10">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="target-occurrence">Occurrence:</label>
-                <input type="number" id="target-occurrence" value="1" min="1">
+
+            <!-- Target-based redline form -->
+            <div id="target-redline-form" style="display: none;">
+                <div class="form-group">
+                    <label for="redline-target-text">Target Text:</label>
+                    <input type="text" id="redline-target-text" placeholder="Text to find and replace">
+                </div>
+                <div class="form-group">
+                    <label for="redline-occurrence">Occurrence:</label>
+                    <input type="number" id="redline-occurrence" value="1" min="1">
+                </div>
             </div>
+
             <div class="form-group">
-                <label for="target-replacement">Replacement Text:</label>
-                <input type="text" id="target-replacement" placeholder="Enter replacement text">
+                <label for="redline-replacement">Replacement Text:</label>
+                <input type="text" id="redline-replacement" placeholder="Enter replacement text">
             </div>
-            <button onclick="redlineTarget()">Apply Redline</button>
-            <div id="target-result" class="result" style="display: none;"></div>
+
+            <button onclick="applyRedline()">Apply Redline</button>
+            <div id="redline-result" class="result" style="display: none;"></div>
         </div>
 
         <!-- Search Tab -->
@@ -434,7 +455,7 @@
                 const documentIds = await response.json();
 
                 // Populate dropdowns
-                const dropdowns = ['get-document-select', 'range-document', 'target-document', 'search-document'];
+                const dropdowns = ['get-document-select', 'append-document', 'redline-document', 'search-document'];
                 dropdowns.forEach(dropdownId => {
                     const dropdown = document.getElementById(dropdownId);
                     dropdown.innerHTML = '<option value="">Select a document...</option>';
@@ -655,6 +676,50 @@ ${result.text}`;
                 }
             } catch (error) {
                 showResult('get-document-result', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function appendToDocument() {
+            const documentId = document.getElementById('append-document').value;
+            const textToAppend = document.getElementById('append-text').value;
+
+            if (!documentId) {
+                showResult('append-result', 'Please select a document', 'error');
+                return;
+            }
+
+            if (!textToAppend.trim()) {
+                showResult('append-result', 'Please enter text to append', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/documents/${documentId}/append`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: textToAppend
+                    })
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    const formattedResult = `Append Successful:
+Document ID: ${result.id}
+New Version: ${result.version}
+Message: ${result.message}`;
+                    showResult('append-result', formattedResult, 'success');
+                    // Clear the text area after successful append
+                    document.getElementById('append-text').value = '';
+                    // Refresh document list
+                    loadDocuments();
+                } else {
+                    showResult('append-result', `Error: ${result.detail}`, 'error');
+                }
+            } catch (error) {
+                showResult('append-result', `Error: ${error.message}`, 'error');
             }
         }
 

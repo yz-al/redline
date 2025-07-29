@@ -7,7 +7,7 @@ from core.text_replace import TextReplacer
 from core.search import SearchEngine
 from core.document_store import DocumentStore
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 import uvicorn
 
 app = FastAPI(
@@ -35,6 +35,13 @@ class CreateDocumentResponse(BaseModel):
     version: int = Field(..., description="Document version")
     created_at: str = Field(..., description="Creation timestamp")
 
+class AppendDocumentRequest(BaseModel):
+    text: str = Field(..., description="Text to append to the document")
+
+class AppendDocumentResponse(BaseModel):
+    id: str = Field(..., description="Document UUID")
+    version: int = Field(..., description="Updated document version")
+    message: str = Field(..., description="Success message")
 
 
 # Range-based replacement - specify exact character positions
@@ -105,8 +112,8 @@ async def create_document(request: CreateDocumentRequest):
             title=request.title,
             text=request.text,
             version=1,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
         )
         
         document_store.save(document)
@@ -156,8 +163,8 @@ async def redline_documents_by_range(request: BatchRangeRedlineRequest):
                     # Create change dict for text replacer
                     change_dict = {
                         'operation': 'replace',
-                        'range': doc_request.range.dict(),
-                        'text': doc_request.replacement
+                        'range': doc_request.range.model_dump(),
+                        'replacement': doc_request.replacement
                     }
                     
                     # Apply changes
@@ -166,7 +173,7 @@ async def redline_documents_by_range(request: BatchRangeRedlineRequest):
                     # Update document
                     document.text = updated_text
                     document.version += 1
-                    document.updated_at = datetime.utcnow()
+                    document.updated_at = datetime.now(timezone.utc)
                     
                     # Save the document (still within the lock)
                     document_store.save_without_lock(document)
@@ -240,7 +247,7 @@ async def redline_documents_by_target(request: BatchTargetRedlineRequest):
                     # Update document
                     document.text = updated_text
                     document.version += 1
-                    document.updated_at = datetime.utcnow()
+                    document.updated_at = datetime.now(timezone.utc)
                     
                     # Save the document (still within the lock)
                     document_store.save_without_lock(document)
@@ -270,9 +277,31 @@ async def redline_documents_by_target(request: BatchTargetRedlineRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.patch("/documents/{doc_id}/append", response_model=AppendDocumentResponse)
+async def append_text_to_document(doc_id: str, request: AppendDocumentRequest):
+    """Append text to a document"""
+    try:
+        success = document_store.append(doc_id, request.text)
+        if not success:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Get the updated document to return version info
+        document = document_store.get_without_lock(doc_id)
+        
+        return AppendDocumentResponse(
+            id=document.id,
+            version=document.version,
+            message="Text appended successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/documents/search", response_model=SearchResponse)
 async def global_search(
-    q: str = Query(..., description="Search query"),
+    q: Optional[str] = Query(None, description="Search query"),
     limit: int = Query(10, description="Maximum number of results"),
     offset: int = Query(0, description="Number of results to skip"),
     buffer: int = Query(50, description="Number of characters to show around each match")
@@ -302,7 +331,7 @@ async def global_search(
 @app.get("/documents/{doc_id}/search", response_model=SearchResponse)
 async def document_search(
     doc_id: str,
-    q: str = Query(..., description="Search query"),
+    q: Optional[str] = Query(None, description="Search query"),
     buffer: int = Query(50, description="Number of characters to show around each match")
 ):
     """Search Within Document"""
@@ -346,6 +375,24 @@ async def get_document(doc_id: str):
             text=document.text,
             version=document.version
         )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/documents/{doc_id}")
+async def delete_document(doc_id: str):
+    """Delete Document"""
+    try:
+        success = document_store.delete(doc_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Rebuild search index after deleting document
+        search_engine.rebuild_index()
+        
+        return {"message": f"Document {doc_id} deleted successfully"}
         
     except HTTPException:
         raise

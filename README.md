@@ -112,6 +112,20 @@ curl -X POST "http://localhost:5000/documents" \
 curl -X GET "http://localhost:5000/documents/{document_id}"
 ```
 
+### Append to a Document
+```bash
+curl -X PATCH "http://localhost:5000/documents/{document_id}/append" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "This text will be appended to the end of the document."
+  }'
+```
+
+### Delete a Document
+```bash
+curl -X DELETE "http://localhost:5000/documents/{document_id}"
+```
+
 ### Redline by Range
 ```bash
 curl -X PATCH "http://localhost:5000/documents/redline/range" \
@@ -238,122 +252,4 @@ python -m pytest tests/test_search.py::TestSearchEngine::test_search_performance
 
 ### Redlining Strategy
 **Why two separate endpoints?**
-- **Range-based** (`/redline/range`): Precise control for legal document editing
-- **Target-based** (`/redline/target`): Semantic editing for content changes
-- **Separation of concerns**: Different use cases, different validation rules
-- **Type safety**: Pydantic models prevent invalid operations
-
-### Concurrency Control
-**Why hierarchical locking?**
-- **Deadlock prevention**: Consistent lock ordering eliminates deadlocks
-- **RAII pattern**: Automatic resource cleanup prevents lock leaks
-- **Distributed safety**: GCS-based locks work across multiple server instances
-- **Timeout handling**: Prevents indefinite blocking
-
-### Search Architecture
-**Why Whoosh + GCS?**
-- **Whoosh**: Pure Python, no external dependencies, excellent full-text search
-- **GCS**: Scalable, reliable, cost-effective storage
-- **Lazy indexing**: Build index on demand, no upfront cost
-- **Temporary storage**: Index files cleaned up automatically
-
-### Batch Operations
-**Why batch redlining?**
-- **Efficiency**: Single API call for multiple documents
-- **Atomicity**: All-or-nothing semantics for related changes
-- **Error handling**: Detailed reporting of successes and failures
-- **Performance**: Reduced network overhead
-
-## 🔧 Configuration
-
-### Environment Variables
-```bash
-# Required
-GCS_BUCKET_NAME=your-bucket-name
-
-# Optional
-GCS_PROJECT_ID=your-project-id  # Uses default if not set
-```
-
-### GCS Bucket Setup
-```bash
-# Create bucket
-gsutil mb gs://your-bucket-name
-
-# Set permissions (if needed)
-gsutil iam ch allUsers:objectViewer gs://your-bucket-name
-```
-
-### Performance Tuning
-```python
-# In main.py, adjust these values based on your needs:
-LOCK_TIMEOUT = 300  # 5 minutes
-SEARCH_BUFFER_DEFAULT = 50  # characters
-SEARCH_LIMIT_DEFAULT = 10  # results
-```
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**"Document not found" errors**
-- Check if document ID exists in GCS bucket
-- Verify GCS credentials and permissions
-- Check bucket name configuration
-
-**Lock acquisition failures**
-- Increase lock timeout if operations are slow
-- Check GCS network connectivity
-- Verify bucket permissions
-
-**Search returning no results**
-- Index may need rebuilding (automatic on document changes)
-- Check if search terms exist in documents
-- Verify search query format
-
-**Performance issues**
-- Monitor GCS request rates
-- Consider document size limits
-- Check network latency to GCS
-
-### Debug Mode
-```bash
-# Enable debug logging
-export PYTHONPATH=.
-python -c "import logging; logging.basicConfig(level=logging.DEBUG)"
-uvicorn main:app --log-level debug
-```
-
-## 📈 Monitoring & Metrics
-
-### Key Metrics to Monitor
-- **API response times**: Target < 500ms for most operations
-- **GCS request rates**: Stay within quota limits
-- **Lock acquisition times**: Should be < 1 second
-- **Search performance**: Index rebuild times
-- **Error rates**: 4xx and 5xx responses
-
-### Logging
-- Application logs include operation timing
-- GCS errors are logged with details
-- Lock operations are logged for debugging
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Support
-
-For issues and questions:
-1. Check the troubleshooting section
-2. Review API documentation at `/docs`
-3. Open an issue with detailed error information
-4. Include environment details and reproduction steps 
+- **Range-based** (`/redline/range`

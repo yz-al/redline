@@ -11,11 +11,11 @@ class TestTextReplacer(unittest.TestCase):
         changes = [{
             'operation': 'replace',
             'range': {'start': 10, 'end': 14},
-            'text': 'was'
+            'replacement': 'was'
         }]
         
         result = self.replacer.apply_changes(self.sample_text, changes)
-        expected = "This is was test document with test content for testing purposes."
+        expected = "This is a was document with test content for testing purposes."
         self.assertEqual(result, expected)
 
     def test_replace_by_target_first_occurrence(self):
@@ -60,7 +60,7 @@ class TestTextReplacer(unittest.TestCase):
             {
                 'operation': 'replace',
                 'range': {'start': 0, 'end': 4},
-                'text': 'That'
+                'replacement': 'That'
             },
             {
                 'operation': 'replace',
@@ -78,11 +78,11 @@ class TestTextReplacer(unittest.TestCase):
         changes = [{
             'operation': 'replace',
             'range': {'start': 10, 'end': 15},
-            'text': ''
+            'replacement': ''
         }]
         
         result = self.replacer.apply_changes(self.sample_text, changes)
-        expected = "This is a  document with test content for testing purposes."
+        expected = "This is a document with test content for testing purposes."
         self.assertEqual(result, expected)
 
     def test_large_text_performance(self):
@@ -112,7 +112,7 @@ class TestTextReplacer(unittest.TestCase):
         changes = [{
             'operation': 'replace',
             'range': {'start': 0, 'end': 4},
-            'text': 'That'
+            'replacement': 'That'
         }]
         result = self.replacer.apply_changes(self.sample_text, changes)
         self.assertTrue(result.startswith('That'))
@@ -121,7 +121,7 @@ class TestTextReplacer(unittest.TestCase):
         changes = [{
             'operation': 'replace',
             'range': {'start': len(self.sample_text) - 9, 'end': len(self.sample_text)},
-            'text': 'purposes!'
+            'replacement': 'purposes!'
         }]
         result = self.replacer.apply_changes(self.sample_text, changes)
         self.assertTrue(result.endswith('purposes!'))
@@ -131,7 +131,7 @@ class TestTextReplacer(unittest.TestCase):
         changes = [{
             'operation': 'replace',
             'range': {'start': 100, 'end': 200},  # Out of bounds
-            'text': 'test'
+            'replacement': 'test'
         }]
         
         # Should handle gracefully without crashing
@@ -157,7 +157,7 @@ class TestTextReplacer(unittest.TestCase):
             {
                 'operation': 'replace',
                 'range': {'start': 0, 'end': 3},
-                'text': 'A'
+                'replacement': 'A'
             },
             {
                 'operation': 'replace',

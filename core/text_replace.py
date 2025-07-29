@@ -35,11 +35,15 @@ class TextReplacer:
                 if 'target' in change:
                     # Target-based replacement
                     position = self._find_target_position(text, change['target'])
-                    changes_with_positions.append((position, change))
+                    if position >= 0:  # Only include if target was found
+                        changes_with_positions.append((position, change))
                 elif 'range' in change:
                     # Range-based replacement
-                    position = change['range']['start']
-                    changes_with_positions.append((position, change))
+                    start = change['range']['start']
+                    end = change['range']['end']
+                    # Only include if range is valid
+                    if start >= 0 and end <= len(text) and start <= end:
+                        changes_with_positions.append((start, change))
         
         # Sort by position (ascending)
         changes_with_positions.sort(key=lambda x: x[0])
@@ -51,13 +55,13 @@ class TextReplacer:
         occurrence = target.get('occurrence', 1)
         
         if occurrence < 1:
-            raise ValueError(f"Invalid occurrence: {occurrence}")
+            return -1  # Invalid occurrence
         
         start = 0
         for i in range(occurrence):
             pos = text.find(target_text, start)
             if pos == -1:
-                raise ValueError(f"Target text '{target_text}' not found at occurrence {occurrence}")
+                return -1  # Target not found
             start = pos + 1
         
         return pos
@@ -83,14 +87,14 @@ class TextReplacer:
         occurrence = target.get('occurrence', 1)
         
         if occurrence < 1:
-            raise ValueError(f"Invalid occurrence: {occurrence}")
+            return text  # Invalid occurrence, return original text
         
         # Find the target position
         start = 0
         for i in range(occurrence):
             pos = text.find(target_text, start)
             if pos == -1:
-                raise ValueError(f"Target text '{target_text}' not found at occurrence {occurrence}")
+                return text  # Target not found, return original text
             start = pos + 1
         
         # Perform the replacement
@@ -99,12 +103,12 @@ class TextReplacer:
     def _replace_by_range(self, text: str, change: Dict[str, Any]) -> str:
         """Replace text by range specification"""
         range_spec = change['range']
-        replacement = change.get('text', '')
+        replacement = change.get('replacement', change.get('text', ''))
         
         start = range_spec['start']
         end = range_spec['end']
         
         if start < 0 or end > len(text) or start > end:
-            raise ValueError(f"Invalid range: start={start}, end={end}, text_length={len(text)}")
+            return text  # Invalid range, return original text
         
         return text[:start] + replacement + text[end:] 

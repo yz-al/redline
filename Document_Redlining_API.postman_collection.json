@@ -54,6 +54,34 @@
                     "response": []
                 },
                 {
+                    "name": "Append to Document",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"text\": \"This text will be appended to the end of the document.\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/documents/{{document_id}}/append",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "{{document_id}}",
+                                "append"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
                     "name": "Get All Document IDs",
                     "request": {
                         "method": "GET",
@@ -65,6 +93,24 @@
                             ],
                             "path": [
                                 "documents"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Document",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/documents/{{document_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "{{document_id}}"
                             ]
                         }
                     },
