@@ -1,0 +1,508 @@
+{
+    "info": {
+        "_postman_id": "document-redlining-api",
+        "name": "Document Redlining API",
+        "description": "A comprehensive collection for testing the Document Redlining API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Document Management",
+            "item": [
+                {
+                    "name": "Create Document",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Legal Contract\",\n  \"text\": \"This agreement is made between Party A and Party B. The terms and conditions are as follows...\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/documents",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Document",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/documents/{{document_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "{{document_id}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Document IDs",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/documents",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Redlining",
+            "item": [
+                {
+                    "name": "Redline by Range",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"documents\": [\n    {\n      \"document_id\": \"{{document_id}}\",\n      \"range\": {\n        \"start\": 10,\n        \"end\": 15\n      },\n      \"replacement\": \"amended\"\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/documents/redline/range",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "redline",
+                                "range"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Redline by Target",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"documents\": [\n    {\n      \"document_id\": \"{{document_id}}\",\n      \"target_text\": \"agreement\",\n      \"occurrence\": 1,\n      \"replacement\": \"contract\"\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/documents/redline/target",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "redline",
+                                "target"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Batch Redline Range",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"documents\": [\n    {\n      \"document_id\": \"{{document_id_1}}\",\n      \"range\": {\n        \"start\": 0,\n        \"end\": 4\n      },\n      \"replacement\": \"This\"\n    },\n    {\n      \"document_id\": \"{{document_id_2}}\",\n      \"range\": {\n        \"start\": 10,\n        \"end\": 15\n      },\n      \"replacement\": \"updated\"\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/documents/redline/range",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "redline",
+                                "range"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Search",
+            "item": [
+                {
+                    "name": "Global Search",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/documents/search?q=contract&limit=10&offset=0&buffer=50",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "contract"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "buffer",
+                                    "value": "50"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Document Search",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/documents/{{document_id}}/search?q=contract&buffer=50",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "{{document_id}}",
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "contract"
+                                },
+                                {
+                                    "key": "buffer",
+                                    "value": "50"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Search with Large Buffer",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/documents/search?q=legal&limit=5&buffer=100",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "legal"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "5"
+                                },
+                                {
+                                    "key": "buffer",
+                                    "value": "100"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "System",
+            "item": [
+                {
+                    "name": "API Root",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                ""
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "API Documentation",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/docs",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "docs"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Error Testing",
+            "item": [
+                {
+                    "name": "Get Nonexistent Document",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/documents/nonexistent-id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "nonexistent-id"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Redline Nonexistent Document",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"documents\": [\n    {\n      \"document_id\": \"nonexistent-id\",\n      \"range\": {\n        \"start\": 0,\n        \"end\": 5\n      },\n      \"replacement\": \"test\"\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/documents/redline/range",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "redline",
+                                "range"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Search Without Query",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/documents/search",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "search"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Invalid Redline Request",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"documents\": [\n    {\n      \"document_id\": \"test-id\"\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/documents/redline/range",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "redline",
+                                "range"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Performance Testing",
+            "item": [
+                {
+                    "name": "Create Large Document",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Large Test Document\",\n  \"text\": \"This is a large test document. \".repeat(1000) + \"The word contract appears here.\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/documents",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Search Large Document",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/documents/search?q=contract&limit=100&buffer=10",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "contract"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "100"
+                                },
+                                {
+                                    "key": "buffer",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:5000",
+            "type": "string"
+        },
+        {
+            "key": "document_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "document_id_1",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "document_id_2",
+            "value": "",
+            "type": "string"
+        }
+    ]
+}

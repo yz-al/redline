@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Redlining</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #f4f1e8 0%, #e8e4d8 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+        }
+
+        .redline-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #8B0000;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            transform: rotate(-2deg);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 80px auto 20px;
+            background: #faf9f5;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .tabs {
+            display: flex;
+            background: #e8e4d8;
+            border-bottom: 3px solid #8B0000;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: #d4cfc4;
+            border: none;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #4a4a4a;
+            transition: all 0.3s ease;
+            border-right: 1px solid #c0b8a8;
+        }
+
+        .tab:last-child {
+            border-right: none;
+        }
+
+        .tab:hover {
+            background: #c8c2b4;
+        }
+
+        .tab.active {
+            background: #faf9f5;
+            color: #8B0000;
+            border-bottom: 3px solid #8B0000;
+        }
+
+        .tab-content {
+            padding: 30px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #4a4a4a;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #c0b8a8;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            background: #fff;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #8B0000;
+        }
+
+        button {
+            background: #8B0000;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #660000;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid #8B0000;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .error {
+            border-left-color: #ff4444;
+            background: #fff5f5;
+        }
+
+        .success {
+            border-left-color: #44aa44;
+            background: #f5fff5;
+        }
+
+        .document-item {
+            background: #fff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #c0b8a8;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .document-item:hover {
+            border-color: #8B0000;
+            box-shadow: 0 2px 8px rgba(139, 0, 0, 0.2);
+        }
+
+        .document-item.selected {
+            border-color: #8B0000;
+            background: #fff5f5;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin: 0 10px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #8B0000;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #8B0000;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="redline-text">Redline</div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('upload')">Upload</button>
+            <button class="tab" onclick="showTab('get-document')">Get Document</button>
+            <button class="tab" onclick="showTab('redline-range')">Redline Range</button>
+            <button class="tab" onclick="showTab('redline-target')">Redline Target</button>
+            <button class="tab" onclick="showTab('search')">Search</button>
+        </div>
+
+        <!-- Upload Tab -->
+        <div id="upload" class="tab-content active">
+            <h2>Upload Document</h2>
+            <div class="form-group">
+                <label for="title">Document Title:</label>
+                <input type="text" id="title" placeholder="Enter document title">
+            </div>
+            <div class="form-group">
+                <label for="content">Document Content:</label>
+                <textarea id="content" rows="10" placeholder="Enter document content"></textarea>
+            </div>
+            <button onclick="uploadDocument()">Upload Document</button>
+            <div id="upload-result" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Get Document Tab -->
+        <div id="get-document" class="tab-content">
+            <h2>Get Document</h2>
+            <div class="form-group">
+                <label for="get-document-select">Select Document:</label>
+                <select id="get-document-select">
+                    <option value="">Loading documents...</option>
+                </select>
+            </div>
+            <button onclick="getDocument()">Get Document</button>
+            <div id="get-document-result" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Redline Range Tab -->
+        <div id="redline-range" class="tab-content">
+            <h2>Redline by Range</h2>
+            <div class="form-group">
+                <label for="range-document">Select Document:</label>
+                <select id="range-document">
+                    <option value="">Loading documents...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="range-start">Start Position:</label>
+                <input type="number" id="range-start" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label for="range-end">End Position:</label>
+                <input type="number" id="range-end" placeholder="10">
+            </div>
+            <div class="form-group">
+                <label for="range-replacement">Replacement Text:</label>
+                <input type="text" id="range-replacement" placeholder="Enter replacement text">
+            </div>
+            <button onclick="redlineRange()">Apply Redline</button>
+            <div id="range-result" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Redline Target Tab -->
+        <div id="redline-target" class="tab-content">
+            <h2>Redline by Target</h2>
+            <div class="form-group">
+                <label for="target-document">Select Document:</label>
+                <select id="target-document">
+                    <option value="">Loading documents...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="target-text">Target Text:</label>
+                <input type="text" id="target-text" placeholder="Text to find and replace">
+            </div>
+            <div class="form-group">
+                <label for="target-occurrence">Occurrence:</label>
+                <input type="number" id="target-occurrence" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label for="target-replacement">Replacement Text:</label>
+                <input type="text" id="target-replacement" placeholder="Enter replacement text">
+            </div>
+            <button onclick="redlineTarget()">Apply Redline</button>
+            <div id="target-result" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Search Tab -->
+        <div id="search" class="tab-content">
+            <h2>Search Documents</h2>
+            <div class="toggle-container">
+                <span>Global Search</span>
+                <label class="toggle">
+                    <input type="checkbox" id="search-toggle" onchange="toggleSearchMode()">
+                    <span class="slider"></span>
+                </label>
+                <span>Document Search</span>
+            </div>
+
+            <div id="global-search">
+                <div class="form-group">
+                    <label for="search-query">Search Query:</label>
+                    <input type="text" id="search-query" placeholder="Enter search term">
+                </div>
+                <div class="form-group">
+                    <label for="search-limit">Limit:</label>
+                    <input type="number" id="search-limit" value="10" min="1" max="100">
+                </div>
+                <div class="form-group">
+                    <label for="search-buffer">Buffer (characters around match):</label>
+                    <input type="number" id="search-buffer" value="50" min="0">
+                </div>
+            </div>
+
+            <div id="document-search" style="display: none;">
+                <div class="form-group">
+                    <label for="search-document">Select Document:</label>
+                    <select id="search-document">
+                        <option value="">Loading documents...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="doc-search-query">Search Query:</label>
+                    <input type="text" id="doc-search-query" placeholder="Enter search term">
+                </div>
+                <div class="form-group">
+                    <label for="doc-search-buffer">Buffer (characters around match):</label>
+                    <input type="number" id="doc-search-buffer" value="50" min="0">
+                </div>
+            </div>
+
+            <button onclick="performSearch()">Search</button>
+            <div id="search-result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+
+        // Load documents on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            loadDocuments();
+        });
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        async function loadDocuments() {
+            try {
+                const response = await fetch(`${API_BASE}/documents`);
+                const documentIds = await response.json();
+
+                // Populate dropdowns
+                const dropdowns = ['get-document-select', 'range-document', 'target-document', 'search-document'];
+                dropdowns.forEach(dropdownId => {
+                    const dropdown = document.getElementById(dropdownId);
+                    dropdown.innerHTML = '<option value="">Select a document...</option>';
+                    documentIds.forEach(id => {
+                        const option = document.createElement('option');
+                        option.value = id;
+                        option.textContent = id.substring(0, 8) + '...';
+                        dropdown.appendChild(option);
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading documents:', error);
+            }
+        }
+
+        async function uploadDocument() {
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+
+            if (!title || !content) {
+                showResult('upload-result', 'Please fill in all fields', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/documents`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title: title,
+                        text: content
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showResult('upload-result', `Document uploaded successfully!\nID: ${result.id}\nVersion: ${result.version}`, 'success');
+                    document.getElementById('title').value = '';
+                    document.getElementById('content').value = '';
+                    loadDocuments(); // Refresh document list
+                } else {
+                    showResult('upload-result', `Error: ${result.detail}`, 'error');
+                }
+            } catch (error) {
+                showResult('upload-result', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function redlineRange() {
+            const documentId = document.getElementById('range-document').value;
+            const start = parseInt(document.getElementById('range-start').value);
+            const end = parseInt(document.getElementById('range-end').value);
+            const replacement = document.getElementById('range-replacement').value;
+
+            if (!documentId || isNaN(start) || isNaN(end) || !replacement) {
+                showResult('range-result', 'Please fill in all fields with valid values', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/documents/redline/range`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        documents: [{
+                            document_id: documentId,
+                            range: {
+                                start: start,
+                                end: end
+                            },
+                            replacement: replacement
+                        }]
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showResult('range-result', `Redline applied successfully!\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    showResult('range-result', `Error: ${result.detail}`, 'error');
+                }
+            } catch (error) {
+                showResult('range-result', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function redlineTarget() {
+            const documentId = document.getElementById('target-document').value;
+            const targetText = document.getElementById('target-text').value;
+            const occurrence = parseInt(document.getElementById('target-occurrence').value);
+            const replacement = document.getElementById('target-replacement').value;
+
+            if (!documentId || !targetText || isNaN(occurrence) || !replacement) {
+                showResult('target-result', 'Please fill in all fields with valid values', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/documents/redline/target`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        documents: [{
+                            document_id: documentId,
+                            target_text: targetText,
+                            occurrence: occurrence,
+                            replacement: replacement
+                        }]
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showResult('target-result', `Redline applied successfully!\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    showResult('target-result', `Error: ${result.detail}`, 'error');
+                }
+            } catch (error) {
+                showResult('target-result', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        function toggleSearchMode() {
+            const isGlobal = !document.getElementById('search-toggle').checked;
+            document.getElementById('global-search').style.display = isGlobal ? 'block' : 'none';
+            document.getElementById('document-search').style.display = isGlobal ? 'none' : 'block';
+        }
+
+        async function performSearch() {
+            const isGlobal = !document.getElementById('search-toggle').checked;
+
+            if (isGlobal) {
+                await performGlobalSearch();
+            } else {
+                await performDocumentSearch();
+            }
+        }
+
+        async function performGlobalSearch() {
+            const query = document.getElementById('search-query').value;
+            const limit = document.getElementById('search-limit').value;
+            const buffer = document.getElementById('search-buffer').value;
+
+            if (!query) {
+                showResult('search-result', 'Please enter a search query', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/documents/search?q=${encodeURIComponent(query)}&limit=${limit}&buffer=${buffer}`);
+                const result = await response.json();
+
+                if (response.ok) {
+                    showResult('search-result', `Search Results:\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    showResult('search-result', `Error: ${result.detail}`, 'error');
+                }
+            } catch (error) {
+                showResult('search-result', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function performDocumentSearch() {
+            const documentId = document.getElementById('search-document').value;
+            const query = document.getElementById('doc-search-query').value;
+            const buffer = document.getElementById('doc-search-buffer').value;
+
+            if (!documentId || !query) {
+                showResult('search-result', 'Please select a document and enter a search query', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/documents/${documentId}/search?q=${encodeURIComponent(query)}&buffer=${buffer}`);
+                const result = await response.json();
+
+                if (response.ok) {
+                    showResult('search-result', `Search Results:\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    showResult('search-result', `Error: ${result.detail}`, 'error');
+                }
+            } catch (error) {
+                showResult('search-result', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getDocument() {
+            const documentId = document.getElementById('get-document-select').value;
+
+            if (!documentId) {
+                showResult('get-document-result', 'Please select a document', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/documents/${documentId}`);
+                const result = await response.json();
+
+                if (response.ok) {
+                    const formattedResult = `Document Details:
+ID: ${result.id}
+Title: ${result.title}
+Version: ${result.version}
+Content:
+${result.text}`;
+                    showResult('get-document-result', formattedResult, 'success');
+                } else {
+                    showResult('get-document-result', `Error: ${result.detail}`, 'error');
+                }
+            } catch (error) {
+                showResult('get-document-result', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        function showResult(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+            element.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>
