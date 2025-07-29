@@ -424,7 +424,7 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:5000';
+        const API_BASE = 'https://fullstack-331026858815.us-east1.run.app/';
 
         // Load documents on page load
         document.addEventListener('DOMContentLoaded', function () {
@@ -507,83 +507,96 @@
             }
         }
 
-        async function redlineRange() {
-            const documentId = document.getElementById('range-document').value;
-            const start = parseInt(document.getElementById('range-start').value);
-            const end = parseInt(document.getElementById('range-end').value);
-            const replacement = document.getElementById('range-replacement').value;
-
-            if (!documentId || isNaN(start) || isNaN(end) || !replacement) {
-                showResult('range-result', 'Please fill in all fields with valid values', 'error');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/documents/redline/range`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        documents: [{
-                            document_id: documentId,
-                            range: {
-                                start: start,
-                                end: end
-                            },
-                            replacement: replacement
-                        }]
-                    })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showResult('range-result', `Redline applied successfully!\n${JSON.stringify(result, null, 2)}`, 'success');
-                } else {
-                    showResult('range-result', `Error: ${result.detail}`, 'error');
-                }
-            } catch (error) {
-                showResult('range-result', `Error: ${error.message}`, 'error');
-            }
+        function toggleRedlineMode() {
+            const isTargetBased = document.getElementById('redline-toggle').checked;
+            document.getElementById('range-redline-form').style.display = isTargetBased ? 'none' : 'block';
+            document.getElementById('target-redline-form').style.display = isTargetBased ? 'block' : 'none';
         }
 
-        async function redlineTarget() {
-            const documentId = document.getElementById('target-document').value;
-            const targetText = document.getElementById('target-text').value;
-            const occurrence = parseInt(document.getElementById('target-occurrence').value);
-            const replacement = document.getElementById('target-replacement').value;
+        async function applyRedline() {
+            const isTargetBased = document.getElementById('redline-toggle').checked;
+            const documentId = document.getElementById('redline-document').value;
+            const replacement = document.getElementById('redline-replacement').value;
 
-            if (!documentId || !targetText || isNaN(occurrence) || !replacement) {
-                showResult('target-result', 'Please fill in all fields with valid values', 'error');
+            if (!documentId || !replacement) {
+                showResult('redline-result', 'Please select a document and enter replacement text', 'error');
                 return;
             }
 
-            try {
-                const response = await fetch(`${API_BASE}/documents/redline/target`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        documents: [{
-                            document_id: documentId,
-                            target_text: targetText,
-                            occurrence: occurrence,
-                            replacement: replacement
-                        }]
-                    })
-                });
+            if (isTargetBased) {
+                // Target-based redline
+                const targetText = document.getElementById('redline-target-text').value;
+                const occurrence = parseInt(document.getElementById('redline-occurrence').value);
 
-                const result = await response.json();
-
-                if (response.ok) {
-                    showResult('target-result', `Redline applied successfully!\n${JSON.stringify(result, null, 2)}`, 'success');
-                } else {
-                    showResult('target-result', `Error: ${result.detail}`, 'error');
+                if (!targetText || isNaN(occurrence)) {
+                    showResult('redline-result', 'Please fill in all target-based fields with valid values', 'error');
+                    return;
                 }
-            } catch (error) {
-                showResult('target-result', `Error: ${error.message}`, 'error');
+
+                try {
+                    const response = await fetch(`${API_BASE}/documents/redline/target`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            documents: [{
+                                document_id: documentId,
+                                target_text: targetText,
+                                occurrence: occurrence,
+                                replacement: replacement
+                            }]
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        showResult('redline-result', `Redline applied successfully!\n${JSON.stringify(result, null, 2)}`, 'success');
+                    } else {
+                        showResult('redline-result', `Error: ${result.detail}`, 'error');
+                    }
+                } catch (error) {
+                    showResult('redline-result', `Error: ${error.message}`, 'error');
+                }
+            } else {
+                // Range-based redline
+                const start = parseInt(document.getElementById('redline-start').value);
+                const end = parseInt(document.getElementById('redline-end').value);
+
+                if (isNaN(start) || isNaN(end)) {
+                    showResult('redline-result', 'Please fill in all range-based fields with valid values', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE}/documents/redline/range`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            documents: [{
+                                document_id: documentId,
+                                range: {
+                                    start: start,
+                                    end: end
+                                },
+                                replacement: replacement
+                            }]
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        showResult('redline-result', `Redline applied successfully!\n${JSON.stringify(result, null, 2)}`, 'success');
+                    } else {
+                        showResult('redline-result', `Error: ${result.detail}`, 'error');
+                    }
+                } catch (error) {
+                    showResult('redline-result', `Error: ${error.message}`, 'error');
+                }
             }
         }
 

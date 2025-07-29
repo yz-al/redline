@@ -2,6 +2,11 @@
 
 A robust, scalable document management system with advanced text redlining capabilities, built with FastAPI and Google Cloud Storage.
 
+##  HOW TO RUN
+
+Open index.html(top level) with a web browswer(preferably chrome). It points to a deployed service.
+
+
 ## 🚀 Features
 
 - **Document Management**: Upload, retrieve, and manage documents with version control
@@ -10,7 +15,7 @@ A robust, scalable document management system with advanced text redlining capab
 - **Concurrent Safety**: Hierarchical locking system prevents deadlocks
 - **Cloud Storage**: Google Cloud Storage integration for scalable persistence
 - **RESTful API**: Clean, intuitive API design with comprehensive documentation
-- **Web Interface**: Beautiful legal pad-themed frontend for easy interaction
+- **Web Interface**: Legal pad-themed frontend for easy interaction
 
 ## 🏗️ Architecture
 
