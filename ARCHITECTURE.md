@@ -33,7 +33,7 @@ graph LR
 
 ### Deployment Strategy
 - **Blue-Green**: Zero-downtime deployments
-- **Canary**: 5% traffic to new version, monitor metrics
+- **Canary**: 5% traffic to new version/dummy versions, monitor metrics
 - **Rollback**: Automatic rollback on health check failures
 - **Infrastructure as Code**: Terraform for GCP resources
 
