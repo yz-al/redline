@@ -7,7 +7,7 @@ set -e
 
 # Default values
 PROJECT_ID=${1:-$(gcloud config get-value project)}
-BUCKET_NAME=${2:-"document-redlining-bucket"}
+BUCKET_NAME=${2:-"document-redlining-bucket-${PROJECT_ID}"}
 REGION=${3:-"us-central1"}
 SERVICE_NAME="document-redlining-api"
 
@@ -45,7 +45,8 @@ gcloud run deploy $SERVICE_NAME \
     --max-instances 10 \
     --min-instances 0 \
     --set-env-vars "GCS_BUCKET_NAME=$BUCKET_NAME,GCS_PROJECT_ID=$PROJECT_ID" \
-    --set-env-vars "PYTHONUNBUFFERED=1"
+    --set-env-vars "PYTHONUNBUFFERED=1" \
+    --service-account "document-redlining-sa@$PROJECT_ID.iam.gserviceaccount.com"
 
 # Get the service URL
 SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region=$REGION --format="value(status.url)")

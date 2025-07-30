@@ -32,7 +32,9 @@ steps:
       - '--min-instances'
       - '0'
       - '--set-env-vars'
-      - 'GCS_BUCKET_NAME=your-document-bucket-name,GCS_PROJECT_ID=$PROJECT_ID'
+      - 'GCS_BUCKET_NAME=document-redlining-bucket-$PROJECT_ID,GCS_PROJECT_ID=$PROJECT_ID'
+      - '--service-account'
+      - 'document-redlining-sa@$PROJECT_ID.iam.gserviceaccount.com'
 
 images:
   - 'gcr.io/$PROJECT_ID/document-redlining-api:$COMMIT_SHA'

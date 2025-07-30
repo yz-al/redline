@@ -316,7 +316,10 @@
                 <label for="append-text">Text to Append:</label>
                 <textarea id="append-text" rows="5" placeholder="Enter text to append to the document"></textarea>
             </div>
-            <button onclick="appendToDocument()">Append Text</button>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="appendToDocument()">Append Text</button>
+                <button onclick="clearAppendText()" style="background: #666;">Clear Text</button>
+            </div>
             <div id="append-result" class="result" style="display: none;"></div>
         </div>
 
@@ -424,7 +427,7 @@
     </div>
 
     <script>
-        const API_BASE = 'https://fullstack-331026858815.us-east1.run.app/';
+        const API_BASE = 'http://localhost:5000';
 
         // Load documents on page load
         document.addEventListener('DOMContentLoaded', function () {
@@ -552,7 +555,16 @@
                     const result = await response.json();
 
                     if (response.ok) {
-                        showResult('redline-result', `Redline applied successfully!\n${JSON.stringify(result, null, 2)}`, 'success');
+                        // Get the updated document to show the new content
+                        const getResponse = await fetch(`${API_BASE}/documents/${documentId}`);
+                        const documentData = await getResponse.json();
+
+                        const formattedResult = `Redline applied successfully!
+${JSON.stringify(result, null, 2)}
+
+Updated Document Content:
+${documentData.text}`;
+                        showResult('redline-result', formattedResult, 'success');
                     } else {
                         showResult('redline-result', `Error: ${result.detail}`, 'error');
                     }
@@ -590,7 +602,16 @@
                     const result = await response.json();
 
                     if (response.ok) {
-                        showResult('redline-result', `Redline applied successfully!\n${JSON.stringify(result, null, 2)}`, 'success');
+                        // Get the updated document to show the new content
+                        const getResponse = await fetch(`${API_BASE}/documents/${documentId}`);
+                        const documentData = await getResponse.json();
+
+                        const formattedResult = `Redline applied successfully!
+${JSON.stringify(result, null, 2)}
+
+Updated Document Content:
+${documentData.text}`;
+                        showResult('redline-result', formattedResult, 'success');
                     } else {
                         showResult('redline-result', `Error: ${result.detail}`, 'error');
                     }
@@ -707,6 +728,8 @@ ${result.text}`;
             }
 
             try {
+                console.log('Appending text:', textToAppend, 'to document:', documentId);
+
                 const response = await fetch(`${API_BASE}/documents/${documentId}/append`, {
                     method: 'PATCH',
                     headers: {
@@ -716,22 +739,38 @@ ${result.text}`;
                         text: textToAppend
                     })
                 });
+
+                console.log('Append response status:', response.status);
                 const result = await response.json();
+                console.log('Append response:', result);
 
                 if (response.ok) {
+                    // Get the updated document to show the new content
+                    console.log('Fetching updated document...');
+                    const getResponse = await fetch(`${API_BASE}/documents/${documentId}`);
+                    console.log('Get document response status:', getResponse.status);
+                    const documentData = await getResponse.json();
+                    console.log('Updated document data:', documentData);
+
                     const formattedResult = `Append Successful:
 Document ID: ${result.id}
 New Version: ${result.version}
-Message: ${result.message}`;
+Message: ${result.message}
+
+Updated Document Content:
+${documentData.text}`;
                     showResult('append-result', formattedResult, 'success');
-                    // Clear the text area after successful append
-                    document.getElementById('append-text').value = '';
+
+                    // Don't clear the text area - let user see what was appended
+                    // document.getElementById('append-text').value = '';
+
                     // Refresh document list
                     loadDocuments();
                 } else {
                     showResult('append-result', `Error: ${result.detail}`, 'error');
                 }
             } catch (error) {
+                console.error('Append error:', error);
                 showResult('append-result', `Error: ${error.message}`, 'error');
             }
         }
@@ -741,6 +780,10 @@ Message: ${result.message}`;
             element.textContent = message;
             element.className = `result ${type}`;
             element.style.display = 'block';
+        }
+
+        function clearAppendText() {
+            document.getElementById('append-text').value = '';
         }
     </script>
 </body>

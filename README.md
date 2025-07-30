@@ -2,10 +2,18 @@
 
 A robust, scalable document management system with advanced text redlining capabilities, built with FastAPI and Google Cloud Storage.
 
-##  HOW TO RUN
+##  Quickstart!
 
-Open index.html(top level) with a web browswer(preferably chrome). It points to a deployed service.
+in this directory.
+RUN:
+pythom -m venv venv
+pip install -r requirements.txt
+venv/bin/python -m uvicorn main:app --reload --host 0.0.0.0 --port 5000
 
+Open index.html(in this directory) with a browser(preferably chrome)
+
+RUN TESTS:
+python -m pytest tests/ -v
 
 ## 🚀 Features
 
@@ -65,21 +73,6 @@ Open index.html(top level) with a web browswer(preferably chrome). It points to 
 3. **Install dependencies**
    ```bash
    pip install -r requirements.txt
-   ```
-
-4. **Set up Google Cloud credentials**
-   ```bash
-   # Option 1: Set environment variable
-   export GOOGLE_APPLICATION_CREDENTIALS="/path/to/your/service-account-key.json"
-   
-   # Option 2: Use gcloud CLI
-   gcloud auth application-default login
-   ```
-
-5. **Configure environment variables**
-   ```bash
-   export GCS_BUCKET_NAME="your-bucket-name"
-   export GCS_PROJECT_ID="your-project-id"  # Optional, uses default if not set
    ```
 
 ## 🚀 Quick Start
